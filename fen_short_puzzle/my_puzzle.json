@@ -1,15 +1,30 @@
 [
   {
-    "name": "ladder_mate_test",
-    "fen": "k7/1R6/2R5/8/8/8/8/7K w - - 0 1",
-    "headline": "The Rook Ladder!",
-    "hook_text": "White to move: No escape!",
-    "details": "Classic rook coordination.",
-    "solution": "1. Rb8#",
+    "name": "hook_mate_puzzle",
+    "fen": "6k1/5pp1/1R2pn2/2r5/2N2P2/1P1r2P1/7P/5RK1 b - - 0 1",
+    "headline": "The Hook Mate! 🪝",
+    "hook_text": "Black to move: Can you find the hook?",
+    "details": "Use the Rook and Knight to create an unbreakable net around the White King.",
+    "solution": "1... Ng4 2. h3 Rxg3#",
     "youtube_metadata": {
-      "title": "Unstoppable Rook Ladder! 🏁 #ChessPuzzles",
-      "description": "Can you spot the mate? White uses the 'Ladder' technique to trap the Black King. \n\nSolution: 1. Rb8# \n\nSubscribe for daily chess shorts!",
-      "tags": ["chess", "checkmate", "puzzle", "shorts"],
+      "title": "The Brutal Hook Mate! 🏁 #ChessPuzzles",
+      "description": "Watch how the Knight and Rook create a 'hook' pattern to deliver a crushing blow. \n\nSolution: 1... Ng4 2. h3 Rxg3# \n\nSubscribe for more daily tactics!",
+      "tags": ["chess", "checkmate", "tactics", "shorts"],
+      "category": "Education",
+      "privacy": "public"
+    }
+  },
+  {
+    "name": "back_rank_decoy",
+    "fen": "5rk1/5ppp/8/8/8/8/5PPP/Q5K1 w - - 0 1",
+    "headline": "The Queen's Sacrifice!",
+    "hook_text": "White to move: Sacrifice for the win?",
+    "details": "A classic back-rank weakness. Can you force the Black Rook out of position?",
+    "solution": "1. Qa8 Rxa8 2. Rb8#",
+    "youtube_metadata": {
+      "title": "Insane Queen Sacrifice! 👑 #ChessTactics",
+      "description": "Sometimes you have to give up the Queen to get the King. \n\n1. Qa8 Rxa8 2. Rb8# \n\nDid you see it? Let us know in the comments!",
+      "tags": ["chess", "sacrifice", "puzzle", "checkmate"],
       "category": "Education",
       "privacy": "public"
     }
