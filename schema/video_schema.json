@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TrendWave Video Script Schema",
+  "type": "object",
+  "properties": {
+    "channel": { "type": "string", "enum": ["TrendWave Now", "SpaceMind_AI"] },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["title", "description", "tags"]
+    },
+    "scenes": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "properties": {
+          "details": { 
+            "type": "string", 
+            "pattern": "^[^A-Z]*$",
+            "description": "Strictly no uppercase letters allowed."
+          },
+          "search_key": { 
+            "type": "string",
+            "description": "Format: Cricketer | Team"
+          },
+          "hook_text": { "type": "string" }
+        },
+        "required": ["details", "search_key", "hook_text"]
+      }
+    }
+  },
+  "required": ["channel", "metadata", "scenes"]
+}

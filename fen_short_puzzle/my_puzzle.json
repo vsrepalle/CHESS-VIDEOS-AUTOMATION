@@ -1,0 +1,17 @@
+[
+  {
+    "name": "ladder_mate_test",
+    "fen": "k7/1R6/2R5/8/8/8/8/7K w - - 0 1",
+    "headline": "The Rook Ladder!",
+    "hook_text": "White to move: No escape!",
+    "details": "Classic rook coordination.",
+    "solution": "1. Rb8#",
+    "youtube_metadata": {
+      "title": "Unstoppable Rook Ladder! 🏁 #ChessPuzzles",
+      "description": "Can you spot the mate? White uses the 'Ladder' technique to trap the Black King. \n\nSolution: 1. Rb8# \n\nSubscribe for daily chess shorts!",
+      "tags": ["chess", "checkmate", "puzzle", "shorts"],
+      "category": "Education",
+      "privacy": "public"
+    }
+  }
+]
