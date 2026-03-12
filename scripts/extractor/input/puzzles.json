@@ -1,19 +1,19 @@
 [
   {
-    "name": "morphy_opera_mate",
-    "fen": "4k3/8/8/8/8/8/2R5/2R1K3 w - - 0 1",
-    "white_player": "paul morphy",
-    "black_player": "duke karl",
-    "hook_text": "white to move and mate in 2. can you find morphy's logic?",
-    "solution": "1. rd8+ kxd8 2. rc8#",
-    "search_key": "paul morphy | mate in 2",
-    "day": "1858-10-22",
-    "location": "paris, france",
+    "name": "lasker_bauer_1889",
+    "fen": "r4rk1/pp1b1ppp/1qn1p3/2bpP3/5P2/2N1B3/PPP1B1PP/R2Q1RK1 w - - 0 1",
+    "white_player": "emanuel lasker",
+    "black_player": "johan bauer",
+    "hook_text": "mate in 2! lasker's legendary double sacrifice begins.",
+    "solution": "1. Bxh7+ Kxh7 2. Qh5#",
+    "search_key": "emanuel lasker | mate in 2 puzzle",
+    "day": "1889-08-26",
+    "location": "amsterdam, netherlands",
     "type": "chess puzzle",
     "youtube_metadata": {
-      "title": "paul morphy's legendary mate in 2! 🧩 #chess",
-      "description": "white to move and win in 2 moves. \n\npuzzle details:\n- player: paul morphy\n- location: paris opera house\n- year: 1858\n\ntune with us for more such news and puzzles. subscribe to find out more.",
-      "hashtags": ["chess", "puzzles", "shorts", "paulmorphy", "checkmate"],
+      "title": "the most famous bishop sacrifice in chess history! 🧩",
+      "description": "can you find the win? emanuel lasker changed chess forever with this move in 1889.\n\ntune with us for more such news. subscribe to find out more.",
+      "hashtags": ["chess", "history", "shorts", "checkmate", "lasker"],
       "privacy_status": "private"
     }
   }

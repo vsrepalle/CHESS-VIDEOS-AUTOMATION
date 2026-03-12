@@ -1,119 +1,67 @@
 import os
 import json
-import shutil
+import pickle
+import sys
 from datetime import datetime
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-import pickle
 
-# ------------------------------------------------
-# CONFIGURATION
-# ------------------------------------------------
-
+# ensure project root is in path
 PROJECT_ROOT = r"C:\VISWA\CHESS_PRO_AUTOMATION"
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 
 VIDEO_DIR = os.path.join(PROJECT_ROOT, "output", "videos")
-HISTORY_DIR = os.path.join(PROJECT_ROOT, "dump_zone", "processed_history")
-
-CLIENT_SECRET = os.path.join(PROJECT_ROOT, "client_secret.json")
-TOKEN_FILE = os.path.join(PROJECT_ROOT, "youtube_token.pickle")
+CLIENT_SECRET = os.path.join(PROJECT_ROOT, "scripts", "uploader", "auth", "client_secrets.json")
+TOKEN_FILE = os.path.join(PROJECT_ROOT, "scripts", "uploader", "auth", "token.pickle")
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
 
-
-# ------------------------------------------------
-# LOGGER
-# ------------------------------------------------
-
 def log(msg):
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
+    # force lowercase for logs as per preference
+    print("[" + datetime.now().strftime("%H:%M:%S") + "] " + msg.lower())
 
-
-# ------------------------------------------------
-# AUTHENTICATION
-# ------------------------------------------------
-
-def get_youtube_service():
-
+def get_service():
     creds = None
-
     if os.path.exists(TOKEN_FILE):
-        with open(TOKEN_FILE, "rb") as token:
-            creds = pickle.load(token)
+        with open(TOKEN_FILE, "rb") as f:
+            creds = pickle.load(f)
 
     if not creds or not creds.valid:
-
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                CLIENT_SECRET,
-                SCOPES
-            )
+            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET, SCOPES)
             creds = flow.run_local_server(port=0)
-
-        with open(TOKEN_FILE, "wb") as token:
-            pickle.dump(creds, token)
+        
+        os.makedirs(os.path.dirname(TOKEN_FILE), exist_ok=True)
+        with open(TOKEN_FILE, "wb") as f:
+            pickle.dump(creds, f)
 
     return build("youtube", "v3", credentials=creds)
 
-
-# ------------------------------------------------
-# CLEANUP
-# ------------------------------------------------
-
-def purge_project(project_name):
-
-    log(f"🧹 Starting cleanup for: {project_name}")
-
-    for ext in [".mp4", ".json"]:
-        file_path = os.path.join(VIDEO_DIR, f"{project_name}{ext}")
-
-        if os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-                log(f"  - Deleted artifact: {project_name}{ext}")
-            except Exception as e:
-                log(f"  - ⚠️ Could not delete artifact: {e}")
-
-    source_folder = os.path.join(HISTORY_DIR, project_name)
-
-    if os.path.exists(source_folder):
-        try:
-            shutil.rmtree(source_folder)
-            log(f"  - Deleted source folder: {project_name}")
-        except Exception as e:
-            log(f"  - ⚠️ Could not delete source folder: {e}")
-
-    log(f"✅ Cleanup complete for {project_name}")
-
-
-# ------------------------------------------------
-# ACTUAL UPLOAD FUNCTION
-# ------------------------------------------------
-
 def upload_video(youtube, video_path, metadata):
+    # extract metadata with lowercase fallback
+    title = metadata.get("title", "chess puzzle").lower()
+    description = metadata.get("description", "").lower() + "\n\ntune with us for more."
+    tags = metadata.get("hashtags", ["chess", "shorts"])
 
     body = {
         "snippet": {
-            "title": metadata.get("title", "Chess Puzzle"),
-            "description": metadata.get("description", ""),
-            "tags": metadata.get("tags", []),
-            "categoryId": "22"
+            "title": title,
+            "description": description,
+            "tags": tags,
+            "categoryId": "24" # entertainment
         },
         "status": {
-            "privacyStatus": metadata.get("privacyStatus", "public")
+            "privacyStatus": "private" # default to private as requested
         }
     }
 
-    media = MediaFileUpload(
-        video_path,
-        chunksize=-1,
-        resumable=True
-    )
+    media = MediaFileUpload(video_path, resumable=True, chunksize=-1)
 
     request = youtube.videos().insert(
         part="snippet,status",
@@ -122,79 +70,63 @@ def upload_video(youtube, video_path, metadata):
     )
 
     response = None
-
     while response is None:
         status, response = request.next_chunk()
-
         if status:
-            log(f"⬆ Upload progress: {int(status.progress() * 100)}%")
+            log("upload progress " + str(int(status.progress() * 100)) + "%")
 
     return response
 
-
-# ------------------------------------------------
-# MAIN BATCH PROCESS
-# ------------------------------------------------
-
-def run_uploader():
-
-    log("🚀 Initializing Batch Uploader...")
+def run_upload_pipeline():
+    log("starting uploader")
 
     if not os.path.exists(VIDEO_DIR):
-        log("❌ Error: Video directory not found")
+        log("video directory missing")
         return
 
-    youtube = get_youtube_service()
+    try:
+        youtube = get_service()
+    except Exception as e:
+        log("authentication error: " + str(e))
+        return
 
-    videos = [f for f in os.listdir(VIDEO_DIR) if f.lower().endswith(".mp4")]
+    videos = [v for v in os.listdir(VIDEO_DIR) if v.endswith(".mp4")]
 
     if not videos:
-        log("⚠️ No videos found in output\\videos to upload")
+        log("no videos found")
         return
 
-    for video_file in videos:
+    for video in videos:
+        name = os.path.splitext(video)[0]
+        video_path = os.path.join(VIDEO_DIR, video)
+        json_path = os.path.join(VIDEO_DIR, name + ".json")
 
-        project_name = os.path.splitext(video_file)[0]
-
-        json_file = os.path.join(VIDEO_DIR, f"{project_name}.json")
-        video_path = os.path.join(VIDEO_DIR, video_file)
-
-        if not os.path.exists(json_file):
-            log(f"❌ Skipping {project_name}: JSON missing")
+        if not os.path.exists(json_path):
+            log("skipping " + name + " (json missing)")
             continue
 
+        with open(json_path, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+
+        # check for 'youtube_metadata' key first, then fallback to root json
+        metadata = raw.get("youtube_metadata", raw)
+
+        log("uploading " + name)
+
         try:
-            with open(json_file, "r", encoding="utf-8") as f:
-                metadata = json.load(f)
-        except Exception as e:
-            log(f"❌ Metadata error for {project_name}: {e}")
-            continue
-
-        log(f"📤 Uploading: {project_name} to YouTube...")
-
-        try:
-
-            response = upload_video(youtube, video_path, metadata)
-
-            if response and "id" in response:
-
-                log(f"🌟 Successfully uploaded {project_name}!")
-                log(f"📺 Video ID: {response['id']}")
-
-                purge_project(project_name)
-
-            else:
-
-                log(f"❌ Upload failed for {project_name}")
+            resp = upload_video(youtube, video_path, metadata)
+            if resp and "id" in resp:
+                log("uploaded successfully: " + resp["id"])
+                
+                # cleanup after successful upload
+                os.remove(video_path)
+                os.remove(json_path)
+                log("artifacts cleaned for " + name)
 
         except Exception as e:
+            log("upload error for " + name + ": " + str(e))
 
-            log(f"❌ Upload exception for {project_name}: {e}")
-
-    log("🏁 All upload tasks finished")
-
-
-# ------------------------------------------------
+    log("uploader finished")
 
 if __name__ == "__main__":
-    run_uploader()
+    run_upload_pipeline()
