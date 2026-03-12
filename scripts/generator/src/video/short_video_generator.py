@@ -15,7 +15,7 @@ import moviepy.video.fx as vfx
 # ------------------------------------------------
 # CONFIGURATION & CONSTANTS
 # ------------------------------------------------
-SHORT_DURATION = 5
+SHORT_DURATION = 15 
 os.environ["IMAGEMAGICK_BINARY"] = r"C:\Program Files\ImageMagick-7.1.2-Q16-HDRI\magick.exe"
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
@@ -39,14 +39,14 @@ def intelligent_extract(data, intent, default="n/a"):
     for keyword in intent_map.get(intent, []):
         best, score = process.extractOne(keyword, keys)
         if score > 85:
-            return str(data[best]).upper() # Upper for punchy chess titles
+            return str(data[best]).upper() 
     return default
 
-def normalize_audio(audio_path):
+def normalize_audio(audio_path, duration):
     audio = AudioFileClip(audio_path)
-    if audio.duration > SHORT_DURATION:
-        return audio.subclipped(0, SHORT_DURATION)
-    return audio.with_duration(SHORT_DURATION)
+    if audio.duration > duration:
+        return audio.subclipped(0, duration)
+    return audio.with_duration(duration)
 
 def apply_ken_burns(clip, duration):
     def zoom(t):
@@ -58,18 +58,22 @@ def apply_ken_burns(clip, duration):
 # ------------------------------------------------
 # MAIN GENERATOR
 # ------------------------------------------------
-def generate_short_video(data, audio_path, brochure_paths, output_dir, output_filename="short_video.mp4"):
-    log(f"🚀 RENDERING {len(brochure_paths)} PAGES INTO VIDEO...")
+def generate_short_video(data, audio_path, images, output_dir, filename="short_video.mp4"):
+    """
+    Core function to render the video. 
+    Argument 'filename' matches the main.py caller exactly.
+    """
+    log(f"🚀 RENDERING {len(images)} PAGES INTO VIDEO...")
     os.makedirs(output_dir, exist_ok=True)
     
     W, H, FPS = (1080, 1920, 30)
-    output_file = os.path.join(output_dir, output_filename)
+    output_file = os.path.join(output_dir, filename)
 
     # 1. Background Layers
-    page_duration = SHORT_DURATION / len(brochure_paths)
+    page_duration = SHORT_DURATION / len(images)
     background_clips = []
     
-    for i, path in enumerate(brochure_paths):
+    for i, path in enumerate(images):
         img_raw = Image.open(path).convert("RGB")
         img_w, img_h = img_raw.size
         aspect_ratio = img_w / img_h
@@ -85,16 +89,17 @@ def generate_short_video(data, audio_path, brochure_paths, output_dir, output_fi
             base_clip = base_clip.cropped(x_center=base_clip.w/2, y_center=H/2, width=W, height=H)
         
         page_clip = apply_ken_burns(base_clip, page_duration).with_start(i * page_duration)
-        if i > 0: page_clip = page_clip.with_effects([vfx.CrossFadeIn(0.5)])
+        if i > 0: 
+            page_clip = page_clip.with_effects([vfx.CrossFadeIn(0.5)])
         background_clips.append(page_clip)
 
     # 2. Overlays
     shadow = (ColorClip(size=(W, 480), color=(0,0,0)).with_opacity(0.65)
               .with_duration(SHORT_DURATION).with_position(("center", "bottom")))
     
-    title_text = intelligent_extract(data, "headline", "CHESS PUZZLE")
+    title_text = intelligent_extract(data, "headline", "CHESS TOURNAMENT")
     prize_text = intelligent_extract(data, "prize", "")
-    header_str = f"{title_text}\n{prize_text}" if prize_text != "N/A" else title_text
+    header_str = f"{title_text}\n{prize_text}" if prize_text and prize_text != "N/A" else title_text
 
     header_info = (TextClip(text=header_str, font_size=85, color="yellow", 
                             font=r"C:\Windows\Fonts\arialbd.ttf", 
@@ -116,16 +121,20 @@ def generate_short_video(data, audio_path, brochure_paths, output_dir, output_fi
             c = c.with_effects([vfx.CrossFadeIn(0.3)])
             subtitle_clips.append(c)
 
-    # 4. NEW: Watermark (Channel Branding)
+    # 4. Branding
     watermark = (TextClip(text="@CHESS_PRO_AI", font_size=40, color="white", 
                           font=r"C:\Windows\Fonts\arial.ttf")
                  .with_opacity(0.4)
                  .with_duration(SHORT_DURATION)
                  .with_position(("right", "bottom")))
+    
+    cta = (TextClip(text="Subscribe to find out more", font_size=60, color="white", bg_color="red",
+                    font=r"C:\Windows\Fonts\arialbd.ttf", method="caption", size=(W, 150))
+           .with_start(SHORT_DURATION - 3).with_duration(3).with_position(("center", "center")))
 
-    # 5. Final Assembly
-    layers = background_clips + [shadow, header_info, watermark] + subtitle_clips
-    final_video = CompositeVideoClip(layers, size=(W, H)).with_audio(normalize_audio(audio_path))
+    # 5. Assembly
+    layers = background_clips + [shadow, header_info, watermark, cta] + subtitle_clips
+    final_video = CompositeVideoClip(layers, size=(W, H)).with_audio(normalize_audio(audio_path, SHORT_DURATION))
 
     final_video.write_videofile(output_file, fps=FPS, codec="libx264", audio_codec="aac", threads=1, logger='bar')
     final_video.close()
@@ -136,7 +145,6 @@ def generate_short_video(data, audio_path, brochure_paths, output_dir, output_fi
 # ------------------------------------------------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fen", help="Chess FEN string")
     parser.add_argument("--metadata", help="Path to JSON metadata")
     parser.add_argument("--output", help="Final video output path")
     parser.add_argument("--brochures", nargs="+", help="Paths to image files")
@@ -144,38 +152,17 @@ if __name__ == "__main__":
 
     audio_track = r"C:\VISWA\CHESS_PRO_AUTOMATION\assets\music\background_track.mp3"
     final_data = {}
-    input_images = []
-
-    # FIX: Added UTF-8 Encoding for JSON reading
+    
     if args.metadata and os.path.exists(args.metadata):
         with open(args.metadata, 'r', encoding="utf-8") as f:
             final_data = json.load(f)
 
-    # MODE A: Chess
-    if args.fen:
-        puzzle_name = final_data.get("name", "temp")
-        board_dir = r"C:\VISWA\CHESS_PRO_AUTOMATION\scripts\generator\output\rendered_boards"
-        # Try specific name first, then fallback to newest
-        specific_img = os.path.join(board_dir, f"{puzzle_name}.png")
-        if os.path.exists(specific_img):
-            input_images = [specific_img]
-        else:
-            board_images = glob.glob(os.path.join(board_dir, "*.png"))
-            if board_images: input_images = [max(board_images, key=os.path.getctime)]
-
-    # MODE B: Brochures
-    elif args.brochures:
-        input_images = args.brochures
-
-    if input_images:
+    if args.brochures:
         out_path = args.output if args.output else os.path.join(r"C:\VISWA\CHESS_PRO_AUTOMATION\output\videos", "short_video.mp4")
         generate_short_video(
             data=final_data,
             audio_path=audio_track,
-            brochure_paths=input_images,
+            images=args.brochures,
             output_dir=os.path.dirname(out_path),
-            output_filename=os.path.basename(out_path)
+            filename=os.path.basename(out_path)
         )
-        print(f"[SUCCESS] Video rendered at: {out_path}")
-    else:
-        print("[ERROR] No images found to process.")
