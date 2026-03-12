@@ -1,47 +1,15 @@
 [
   {
-    "name": "morphy_bijou",
-    "fen": "kbK5/pp6/1P6/8/8/8/8/R7 w - - 0 1",
-    "headline": "Morphy's Hidden Gem! 💎",
-    "hook_text": "White to move: Can you find the move that left the world speechless?",
-    "details": "A legendary puzzle by Paul Morphy. It features a stunning rook sacrifice to force a pawn mate.",
-    "solution": "1. Ra6 bxa6 2. b7#",
-    "youtube_metadata": {
-      "title": "Paul Morphy's Most Famous Puzzle! ⚡ #Shorts",
-      "description": "A 10-year-old prodigy created this masterpiece. Can you solve it?\n\nSolution: 1. Ra6! bxa6 2. b7#",
-      "tags": ["chess", "paul morphy", "puzzle", "checkmate"],
-      "category": "Education",
-      "privacy": "public"
-    }
-  },
-  {
-    "name": "blackburne_quiet_move",
-    "fen": "5K2/8/8/1P6/8/4p3/4P3/k1B5 w - - 0 1",
-    "headline": "The Silent Killer! 🤫",
-    "hook_text": "White to move: No checks, no captures, just a win.",
-    "details": "Joseph Blackburne demonstrates the power of a 'quiet move'. By repositioning the Bishop, Black is left helpless.",
-    "solution": "1. Ba3 Ka2 2. Bc1#",
-    "youtube_metadata": {
-      "title": "The Power of a Quiet Move! ♟️ #Shorts",
-      "description": "Not every winning move is a check. Blackburne shows how to weave a mating net.\n\nSolution: 1. Ba3! Ka2 2. Bc1#",
-      "tags": ["chess", "blackburne", "tactics", "checkmate"],
-      "category": "Education",
-      "privacy": "public"
-    }
-  },
-  {
-    "name": "heathcote_zugzwang",
-    "fen": "8/2p2p2/2B1p3/2k1P3/1pP1p1p1/1P2P1P1/2K1P3/8 w - - 0 1",
-    "headline": "The Zugzwang Trap! 🕸️",
-    "hook_text": "White to move: Force your opponent to defeat themselves.",
-    "details": "Godfrey Heathcote's masterpiece. White makes a move that forces Black into a fatal En Passant response.",
-    "solution": "1. Be8 f5 2. exf6 e.p.#",
-    "youtube_metadata": {
-      "title": "The Ultimate Zugzwang! 🤯 #Shorts",
-      "description": "Watch how Black is forced to commit suicide on the board. \n\nSolution: 1. Be8! f5 2. exf6 e.p.#",
-      "tags": ["chess", "zugzwang", "en passant", "puzzle"],
-      "category": "Education",
-      "privacy": "public"
-    }
+    "name": "steinitz_trap_1882",
+    "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1",
+    "white_player": "wilhelm steinitz",
+    "black_player": "unknown",
+    "hook_text": "can you find the mate in 2? steinitz shows no mercy!",
+    "solution": "1. Qxf7#",
+    "search_key": "wilhelm steinitz | mate in 2 puzzle",
+    "day": "1882-05-14",
+    "location": "vienna, austria",
+    "type": "chess puzzle",
+    "cta": "subscribe to find out more"
   }
 ]

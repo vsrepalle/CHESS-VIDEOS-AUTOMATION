@@ -1,25 +1,69 @@
 import os
-from .board_renderer import render_fen_to_png
+import sys
+import json
+from datetime import datetime
+import moviepy as mp
 
-def process_single_fen(fen_text, video_id):
-    # Ensure the path is relative to the PROJECT_ROOT or absolute
-    # Based on your structure, we navigate to scripts/generator/output/rendered_boards
-    output_dir = os.path.join("scripts", "generator", "output", "rendered_boards")
-    
-    # Create the directory if it doesn't exist
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
-        
-    img_path = os.path.abspath(os.path.join(output_dir, f"{video_id}.png"))
+# absolute path setup
+PROJECT_ROOT = r"C:\VISWA\CHESS_PRO_AUTOMATION"
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 
-    # 1. Generate the Image using your board_renderer
-    try:
-        render_fen_to_png(fen_text, img_path)
-        print(f"Board image created at: {img_path}")
+# dynamic import to handle both module and direct script execution
+try:
+    from scripts.generator.src.video.board_renderer import render_fen_to_png
+    from scripts.generator.src.video.create_chess_short import create_chess_short
+except ImportError:
+    import board_renderer
+    import create_chess_short
+    render_fen_to_png = board_renderer.render_fen_to_png
+    create_chess_short = create_chess_short.create_chess_short
+
+INPUT_JSON = os.path.join(PROJECT_ROOT, "scripts", "extractor", "input", "puzzles.json")
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output", "videos")
+DUMP_DIR = os.path.join(PROJECT_ROOT, "dump_zone")
+AUDIO_FILE = os.path.join(PROJECT_ROOT, "assets", "music", "background_track.mp3")
+
+def log(msg):
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
+
+def process_pipeline():
+    if not os.path.exists(INPUT_JSON):
+        log(f"❌ missing input: {INPUT_JSON}")
+        return
+
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs(os.path.join(DUMP_DIR, "chess_boards"), exist_ok=True)
+
+    with open(INPUT_JSON, 'r', encoding='utf-8') as f:
+        puzzles = json.load(f)
+
+    for puzzle in puzzles:
+        name = puzzle.get("name", "short").lower()
+        log(f"➡️ processing: {name}")
+
+        board_img = os.path.join(DUMP_DIR, "chess_boards", f"{name}.png")
+        render_fen_to_png(puzzle.get("fen"), board_img)
+
+        temp_mp4 = os.path.join(DUMP_DIR, f"temp_{name}.mp4")
+        # 10 second duration for shorts
+        clip = mp.ImageClip(board_img).with_duration(10)
+        if os.path.exists(AUDIO_FILE):
+            audio = mp.AudioFileClip(AUDIO_FILE).with_duration(10)
+            clip = clip.with_audio(audio)
         
-        # 2. Return the path so pipeline_runner.py knows where the image is
-        return img_path
-        
-    except Exception as e:
-        print(f"Error rendering FEN: {e}")
-        return None
+        clip.write_videofile(temp_mp4, fps=24, codec="libx264", audio_codec="aac")
+        clip.close()
+
+        final_mp4 = os.path.join(OUTPUT_DIR, f"{name}.mp4")
+        create_chess_short(temp_mp4, puzzle.get("white_player", "unknown"), puzzle.get("hook_text", ""), final_mp4)
+
+        if os.path.exists(final_mp4):
+            log(f"✅ success: {final_mp4}")
+            # generate metadata json for uploader
+            with open(final_mp4.replace(".mp4", ".json"), 'w', encoding='utf-8') as j:
+                json.dump(puzzle, j, indent=4)
+            if os.path.exists(temp_mp4): os.remove(temp_mp4)
+
+if __name__ == "__main__":
+    process_pipeline()

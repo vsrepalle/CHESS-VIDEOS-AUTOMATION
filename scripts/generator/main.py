@@ -1,91 +1,119 @@
 import os
 import sys
 import json
+import shutil
+import time
 from datetime import datetime
-from pathlib import Path
+from PIL import Image
+from google import genai
 
-# --- ENVIRONMENT SETUP ---
-# Ensure the project root is in the path for module imports
 PROJECT_ROOT = r"C:\VISWA\CHESS_PRO_AUTOMATION"
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
 from scripts.generator.src.video.short_video_generator import generate_short_video
+# New import for the overlay logic
+from scripts.generator.src.video.create_chess_short import create_chess_short
 
-# --- DIRECTORY CONFIGURATION ---
-# We look for metadata in the output folder where Step 1 (OCR) saves them
-METADATA_DIR = os.path.join(PROJECT_ROOT, "output", "videos")
-# We look for the original images in the extractor's input folder
-IMAGE_SOURCE_DIR = os.path.join(PROJECT_ROOT, "scripts", "extractor", "input")
-# Output & Assets
+# Replace with your actual API Key
+client = genai.Client(api_key="AIzaSyBKpgiIJ-XWDEf4yefrVlAfVj4TrCa_2Zw")
+
+TOURNAMENT_BASE_DIR = os.path.join(PROJECT_ROOT, "dump_zone", "tournaments")
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output", "videos")
 AUDIO_PATH = os.path.join(PROJECT_ROOT, "assets", "music", "background_track.mp3")
-OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output", "previews")
 
 def log(msg):
-    """Standardized logging with timestamp."""
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
 
-def run_pipeline():
-    # 1. Verification and Setup
-    if not os.path.exists(OUTPUT_DIR):
-        os.makedirs(OUTPUT_DIR)
-
-    if not os.path.exists(METADATA_DIR):
-        log(f"❌ Error: Metadata directory not found: {METADATA_DIR}")
-        return
-
-    # 2. Collect all JSON files (projects) from the central folder
-    metadata_files = [f for f in os.listdir(METADATA_DIR) if f.lower().endswith(".json")]
-
-    if not metadata_files:
-        log("⚠️ No metadata JSONs found in output/videos. Please run Step 1 (OCR) first.")
-        return
-
-    log(f"🎬 Found {len(metadata_files)} project(s) to render.")
-
-    # 3. Process each project individually
-    for json_name in metadata_files:
-        project_stem = os.path.splitext(json_name)[0]  # e.g., 'brochure1'
-        json_path = os.path.join(METADATA_DIR, json_name)
-        
-        # Load the Metadata
+def extract_metadata_with_vision(image_path, retries=2):
+    """Uses Gemini 1.5 Flash (Fixed Typo) to extract brochure data."""
+    for i in range(retries + 1):
         try:
-            with open(json_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except Exception as e:
-            log(f"❌ Error reading {json_name}: {e}")
-            continue
-
-        # 4. Find the matching image for this project
-        # We check common extensions in the extractor's input folder to find the source image
-        found_images = []
-        for ext in [".jpg", ".jpeg", ".png"]:
-            img_path = os.path.join(IMAGE_SOURCE_DIR, project_stem + ext)
-            if os.path.exists(img_path):
-                found_images.append(img_path)
-                break  # Use the first matching image file found
-
-        if not found_images:
-            log(f"⚠️ Skipping {project_stem}: No matching image found in {IMAGE_SOURCE_DIR}")
-            continue
-
-        # 5. Execute Video Generation
-        try:
-            log(f"🧵 Rendering: {project_stem}...")
-            
-            # Use 'filename' as the keyword to match the updated generator signature
-            video_path = generate_short_video(
-                data=data, 
-                audio_path=AUDIO_PATH, 
-                images=found_images, 
-                output_dir=OUTPUT_DIR, 
-                filename=f"{project_stem}.mp4"
+            img = Image.open(image_path)
+            prompt = """
+            Analyze this chess tournament brochure. Return ONLY a JSON object with:
+            'tournament_name': A punchy title.
+            'prize_pool': Total prizes mentioned.
+            'hook_text': A 1-sentence YouTube hook.
+            'details': 2-sentence summary of location/date.
+            'white_player': The name of the main featured player if mentioned, else 'unknown'.
+            """
+            # TYPO FIXED: gemini-1.5-flash
+            response = client.models.generate_content(
+                model="gemini-1.5-flash", 
+                contents=[prompt, img]
             )
             
-            log(f"✅ Success! Generated: {os.path.basename(video_path)}")
+            json_text = response.text.replace('```json', '').replace('```', '').strip()
+            return json.loads(json_text)
             
         except Exception as e:
-            log(f"❌ Render Error for {project_stem}: {e}")
+            if "429" in str(e) and i < retries:
+                log(f"⏳ Rate limit. Retrying in 15s ({i+1}/{retries})...")
+                time.sleep(15)
+                continue
+            log(f"⚠️ Vision failed: {e}")
+            return None
+
+def run_pipeline():
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    
+    folders = [d for d in os.listdir(TOURNAMENT_BASE_DIR) 
+               if os.path.isdir(os.path.join(TOURNAMENT_BASE_DIR, d))]
+
+    if not folders:
+        log("⚠️ No folders found in tournaments directory.")
+        return
+
+    for folder_name in folders:
+        folder_path = os.path.join(TOURNAMENT_BASE_DIR, folder_name)
+        
+        # Check for any valid image format
+        images = sorted([os.path.join(folder_path, f) for f in os.listdir(folder_path) 
+                         if f.lower().endswith((".jpg", ".png", ".jpeg", ".webp"))])
+        
+        if not images:
+            log(f"❓ Skipping {folder_name}: No images found in folder.")
+            continue
+
+        log(f"🧠 Analyzing brochure for: {folder_name}...")
+        data = extract_metadata_with_vision(images[0])
+        
+        if not data:
+            log(f"⚠️ Fallback activated for {folder_name}.")
+            data = {
+                "tournament_name": folder_name.replace("_", " ").title(), 
+                "details": "New Tournament Alert!", 
+                "hook_text": "Check out the details!",
+                "white_player": "unknown"
+            }
+
+        try:
+            log(f"🧵 Rendering base video for {folder_name}...")
+            temp_video_name = f"temp_{folder_name}.mp4"
+            temp_video_path = os.path.join(OUTPUT_DIR, temp_video_name)
+            final_video_path = os.path.join(OUTPUT_DIR, f"{folder_name}.mp4")
+
+            # 1. Generate the standard board video
+            generate_short_video(data=data, audio_path=AUDIO_PATH, images=images, output_dir=OUTPUT_DIR, filename=temp_video_name)
+            
+            # 2. Add the player image overlay
+            player_name = data.get("white_player", "unknown")
+            log(f"👤 Adding portrait overlay for: {player_name}...")
+            create_chess_short(temp_video_path, player_name, final_video_path)
+            
+            # 3. Save metadata and cleanup temp file
+            with open(os.path.join(OUTPUT_DIR, f"{folder_name}.json"), "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=4)
+            
+            if os.path.exists(temp_video_path):
+                os.remove(temp_video_path)
+                
+            log(f"✅ Created artifacts for {folder_name}")
+            time.sleep(2) # Prevent burst limits
+            
+        except Exception as e:
+            log(f"❌ Render Error: {e}")
 
 if __name__ == "__main__":
     run_pipeline()
