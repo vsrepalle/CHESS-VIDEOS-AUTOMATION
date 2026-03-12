@@ -1,140 +1,24 @@
-# ==========================================
-
-# PYTHON
-
-# ==========================================
-
-**pycache**/
-*.py[cod]
-*$py.class
-*.pyo
-*.pyd
-*.pyc
-
-# ==========================================
-
-# VIRTUAL ENVIRONMENT
-
-# ==========================================
-
+# secrets
 .env
-.env.*
-venv/
-env/
-ENV/
-
-# ==========================================
-
-# SECRETS / API KEYS
-
-# ==========================================
-
 client_secret.json
 client_secrets.json
-token.json
 token.pickle
+token.json
 
-# ==========================================
+# python
+__pycache__/
+*.pyc
 
-# LOG FILES
+# temp video
+*TEMP_MPY*
 
-# ==========================================
-
+# logs
 logs/
-*.log
 
-scripts/extractor/logs/
-scripts/generator/logs/
-
-# ==========================================
-
-# GENERATED OUTPUT
-
-# ==========================================
-
+# output
 output/videos/
 output/previews/
 
-scripts/generator/output/
-scripts/extractor/output/
-
-# ==========================================
-
-# GENERATED CHESS BOARDS
-
-# ==========================================
-
-scripts/generator/output/rendered_boards/
-
-# ==========================================
-
-# TEMP FILES
-
-# ==========================================
-
-*.tmp
-*.temp
-*.cache
-
-# ==========================================
-
-# ARCHIVE / OLD DATA
-
-# ==========================================
-
-archive_bats/
-scripts/generator/archive/
-
-# ==========================================
-
-# LOCAL INPUT FILES
-
-# ==========================================
-
-scripts/extractor/input/
-scripts/generator/input/
-
-dump_zone/
-
-# ==========================================
-
-# OS FILES
-
-# ==========================================
-
-Thumbs.db
-Desktop.ini
+# OS
 .DS_Store
-
-# ==========================================
-
-# EXE BUILDS
-
-# ==========================================
-
-dist/
-build/
-*.exe
-
-# ==========================================
-
-# IDE FILES
-
-# ==========================================
-
-.vscode/
-.idea/
-
-# ==========================================
-
-# MUSIC / LARGE MEDIA (optional)
-
-# ==========================================
-
-assets/music/*.mp3
-
-youtube_token.pickle
-client_secret.json
-*.mp4
-*.pickle
-temp_*
+Thumbs.db

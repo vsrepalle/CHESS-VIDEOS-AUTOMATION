@@ -1,0 +1,18 @@
+{
+    "channel": "ChessArena",
+    "topic_id": "Elite_Rapid_Open_2026",
+    "headline": null,
+    "day": "Sunday",
+    "date": null,
+    "location": null,
+    "news_type": "Chess Tournament Announcement",
+    "hook_text": "A major rapid chess tournament is coming to Hyderabad with a large prize pool.",
+    "details": "The Elite Rapid Open Chess Championship will take place at None. The tournament offers a prize pool of None rupees with an entry fee of None rupees.",
+    "subscribe_hook": "Register now and compete in this exciting rapid chess event.",
+    "metadata": {
+        "organiser": null,
+        "contact_number": "7416247318",
+        "total_prize_pool_rupees": null,
+        "entry_fee_rupees": null
+    }
+}

@@ -1,0 +1,27 @@
+<DOCTYPE html>
+<html>
+<head>
+    <title>Chess Pro Automation</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; background: #f4f4f9; }
+        .card { border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin-bottom: 20px; background: white; }
+        button { background: #2ecc71; color: white; border: none; padding: 10px; cursor: pointer; width: 100%; }
+        .run-btn { background: #3498db; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>♟️ Chess Tournament Manager</h1>
+    <div class="card">
+        <h3>Upload Tournament Pages</h3>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="text" name="tournament_name" placeholder="Tournament Name" required style="width:100%; margin-bottom:10px;">
+            <input type="file" name="brochures" multiple required>
+            <button type="submit">Save Pages</button>
+        </form>
+    </div>
+    <div class="card">
+        <h3>Ready to Process</h3>
+        <button class="run-btn" onclick="location.href='/run_pipeline'">🚀 Start Rendering All Videos</button>
+    </div>
+</body>
+</html>

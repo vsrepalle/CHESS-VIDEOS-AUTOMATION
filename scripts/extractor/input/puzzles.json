@@ -1,0 +1,20 @@
+[
+  {
+    "name": "morphy_opera_mate",
+    "fen": "4k3/8/8/8/8/8/2R5/2R1K3 w - - 0 1",
+    "white_player": "paul morphy",
+    "black_player": "duke karl",
+    "hook_text": "white to move and mate in 2. can you find morphy's logic?",
+    "solution": "1. rd8+ kxd8 2. rc8#",
+    "search_key": "paul morphy | mate in 2",
+    "day": "1858-10-22",
+    "location": "paris, france",
+    "type": "chess puzzle",
+    "youtube_metadata": {
+      "title": "paul morphy's legendary mate in 2! 🧩 #chess",
+      "description": "white to move and win in 2 moves. \n\npuzzle details:\n- player: paul morphy\n- location: paris opera house\n- year: 1858\n\ntune with us for more such news and puzzles. subscribe to find out more.",
+      "hashtags": ["chess", "puzzles", "shorts", "paulmorphy", "checkmate"],
+      "privacy_status": "private"
+    }
+  }
+]
