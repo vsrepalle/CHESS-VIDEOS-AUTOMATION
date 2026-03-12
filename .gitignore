@@ -132,3 +132,9 @@ build/
 # ==========================================
 
 assets/music/*.mp3
+
+youtube_token.pickle
+client_secret.json
+*.mp4
+*.pickle
+temp_*
